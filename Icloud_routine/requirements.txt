@@ -1,0 +1,6 @@
+pandas
+openpyxl
+python-dotenv
+requests
+aiogram==3.13.0
+asyncio
