@@ -2,7 +2,6 @@ import asyncio
 import json
 import logging
 import os
-import random
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -12,6 +11,7 @@ from dotenv import load_dotenv
 
 from watcher import CustomICloudWatcher
 from checker import ICloudChecker
+from alias_generator import HideMyEmailGenerator   # ← реальный генератор
 
 ROOT = Path(__file__).parent
 PROFILES_XLSX = ROOT / "profiles.xlsx"
@@ -21,7 +21,7 @@ load_dotenv()
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s")
 
-# ====================== Живой лог (3 строки) ======================
+# ====================== Живой лог ======================
 live_log: list[str] = []
 
 def add_log(line: str):
@@ -57,26 +57,7 @@ def save_profiles(df: pd.DataFrame):
     df.to_excel(PROFILES_XLSX, index=False)
 
 
-# ====================== Генератор алиасов ======================
-class HideMyEmailGenerator:
-    def __init__(self, cookies: str):
-        self.cookies = cookies.strip()
-
-    async def __aenter__(self):
-        logging.info("HideMyEmail session started")
-        return self
-
-    async def __aexit__(self, *args):
-        logging.info("HideMyEmail session closed")
-
-    async def generate_and_reserve(self):
-        await asyncio.sleep(random.uniform(4, 9))
-        words = ['sunbelt', 'debates', 'basin', 'high', 'optic', 'swamp', 'reliant', 'vogue', 'addled', 'tunable']
-        alias = f"{random.choice(words)}.{random.choice(words)}{random.randint(1,99)}{random.choice('abcdefgh')}@icloud.com"
-        logging.info(f"Сгенерирован алиас: {alias}")
-        return {"ok": True, "email": alias}
-
-
+# ====================== Генерация алиасов ======================
 async def generate_icloud_aliases(profile_ids: list | None = None):
     if not ICLOUD_COOKIES_FILE.exists() or not ICLOUD_COOKIES_FILE.read_text(encoding="utf-8").strip():
         return {"ok": False, "message": "icloud_cookies.txt не найден или пустой!"}
@@ -88,29 +69,38 @@ async def generate_icloud_aliases(profile_ids: list | None = None):
         profile_ids = df["Profile ID"].astype(str).str.strip().tolist()
 
     updated = 0
+
     async with HideMyEmailGenerator(cookies=cookies_text) as generator:
         for pid in profile_ids:
             pid = str(pid).strip()
             mask = df["Profile ID"].astype(str).str.strip() == pid
             if not mask.any():
                 continue
-            row_idx = df[mask].index[0]
 
-            current = str(df.at[row_idx, "Alias Email"]).strip()
-            if current and current.endswith("@icloud.com"):
+            row_idx = df[mask].index[0]
+            current_alias = str(df.at[row_idx, "Alias Email"]).strip()
+
+            if current_alias and current_alias.endswith("@icloud.com"):
+                logging.info(f"Пропуск {pid} — алиас уже существует")
                 continue
 
+            logging.info(f"Генерация алиаса для профиля: {pid}")
             result = await generator.generate_and_reserve()
+
             if result.get("ok") and result.get("email"):
                 df.at[row_idx, "Alias Email"] = result["email"]
                 df.at[row_idx, "Status"] = "success"
                 updated += 1
+                logging.info(f"✓ Успешно сохранён для {pid}: {result['email']}")
             else:
                 df.at[row_idx, "Status"] = "failed"
+                error = result.get("error", "Unknown error")
+                logging.error(f"✗ Не удалось создать для {pid}: {error}")
 
     if updated > 0:
         save_profiles(df)
-    return {"ok": True, "message": f"Сгенерировано {updated} алиасов"}
+
+    return {"ok": True, "message": f"Сгенерировано и забронировано {updated} алиасов"}
 
 
 # ====================== Watcher + Telegram ======================
@@ -144,6 +134,12 @@ async def _send_to_telegram(token: str, chat_id: str, text: str):
 
 # ====================== HTTP Handler ======================
 class Handler(BaseHTTPRequestHandler):
+    # ... (оставляем тот же код Handler, что был у тебя раньше — он уже хороший)
+
+    # (Чтобы не делать сообщение слишком длинным, я оставлю только важную часть)
+    # Полный Handler можно взять из предыдущего сообщения — он не менялся.
+
+    # Просто убедись, что в do_POST для /api/aliases/generate вызывается generate_icloud_aliases
     def _write_json(self, data: dict, status: int = 200):
         payload = json.dumps(data, ensure_ascii=False).encode("utf-8")
         self.send_response(status)
