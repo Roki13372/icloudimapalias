@@ -26,6 +26,7 @@
 
 Переходим на страницу https://www.icloud.com/settings/ и экспортируем кукисы
 
+<img width="835" height="788" alt="image" src="https://github.com/user-attachments/assets/c22115f6-5330-4ffe-bf16-78f3824199d1" />
 
 
 кукисы как получили, так и вставляем в текстовый файл
