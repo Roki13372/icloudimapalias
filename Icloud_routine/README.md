@@ -21,9 +21,21 @@ https://addons.mozilla.org/en-US/firefox/addon/editthiscookie-lastest-edition/ -
 Choose the preferred export format for cookies: 
 
 
-3\. Установи зависимости:
+3\ запуск, когда все вписано**
 
-&#x20;  ```bash
+# 1. Создаём виртуальную среду (если ещё не создана)
+python -m venv venv
 
-&#x20;  pip install -r requirements.txt
+# 2. Активируем виртуальную среду
+# Windows:
+venv\Scripts\activate
+
+# Linux / macOS:
+# source venv/bin/activate
+
+# 3. Устанавливаем зависимости
+pip install -r requirements.txt
+
+# 4. (Опционально) Обновляем pip и setuptools
+pip install --upgrade pip setuptools wheel
 
