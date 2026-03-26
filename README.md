@@ -22,3 +22,22 @@
 ```bash
 git clone https://github.com/твой_ник/icloud-hme-manager.git
 cd icloud-hme-manager
+
+2. Настрой окружение
+Bash# Создай виртуальное окружение (рекомендуется)
+python -m venv venv
+venv\Scripts\activate     # Windows
+# source venv/bin/activate   # Linux / macOS
+
+Установи зависимости:
+
+Bashpip install -r requirements.txt
+
+Настрой конфигурацию:
+
+Скопируй .env.example в .env и заполни свои данные
+Положи свои iCloud cookies в файл icloud_cookies.txt
+
+Запусти приложение:
+
+Bashpython app.py
