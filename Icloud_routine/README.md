@@ -27,11 +27,11 @@ Choose the preferred export format for cookies:
 python -m venv venv
 
 2. Активируем виртуальную среду
-# Windows:
+Windows:
 venv\Scripts\activate
 
-# Linux / macOS:
-# source venv/bin/activate
+Linux / macOS:
+source venv/bin/activate
 
 3. Устанавливаем зависимости
 pip install -r requirements.txt
